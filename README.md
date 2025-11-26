@@ -5,7 +5,7 @@ Welcome! This repository hosts the lab notes, command cheat sheets, and technica
 
 ## 📺 Connect
 * **YouTube Channel:** https://www.youtube.com/@sjpentestlab
-* **Portfolio/Social:** https://www.linkedin.com/in/sijia-axford-59a58a294/
+* **Linkedin:** https://www.linkedin.com/in/sijia-axford-59a58a294/
 
 ---
 
@@ -13,7 +13,7 @@ Welcome! This repository hosts the lab notes, command cheat sheets, and technica
 
 ### 🔹 AWS IAM Enumeration (Manual vs PACU)
 * **Video:** [Link will go here once uploaded]
-* **Lab Provider:** Cyber/AppFlowy
+* **Lab Provider:** Cyber
 * **Tools Used:** AWS CLI, PACU
 * **Resources:**
     * [📄 Command Cheat Sheet](./02-AWS-IAM-Enumeration/cheatsheet.md) - All the CLI commands used in the video.
