@@ -16,7 +16,7 @@ Welcome! This repository hosts the lab notes, command cheat sheets, and technica
 * **Lab Provider:** Cyber
 * **Tools Used:** AWS CLI, PACU
 * **Resources:**
-    * [📄 Command Cheat Sheet](./02-AWS-IAM-Enumeration/cheatsheet.md) - All the CLI commands used in the video.
+    * https://github.com/Sijiaax/S.J.-s-Pen-Test-Lab/blob/main/Labs/cybr/Introduction%20to%20AWS%20IAM%20Enumeration_walkrhtough - All the CLI commands used in the video.
 
 ### 🔹 AWS Elastic Beanstalk
 * **Video:** https://youtu.be/AXMTKARiz40; https://youtu.be/gj7vZ4HXHg8; https://youtu.be/T-wismbixI4
