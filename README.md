@@ -19,9 +19,7 @@ Welcome! This repository hosts the lab notes, command cheat sheets, and technica
     * [📄 Command Cheat Sheet](./02-AWS-IAM-Enumeration/cheatsheet.md) - All the CLI commands used in the video.
 
 ### 🔹 AWS Elastic Beanstalk
-* **Video:** https://youtu.be/AXMTKARiz40
-*            https://youtu.be/gj7vZ4HXHg8
-*            https://youtu.be/T-wismbixI4
+* **Video:** https://youtu.be/AXMTKARiz40; https://youtu.be/gj7vZ4HXHg8; https://youtu.be/T-wismbixI4
 * **Summary:** Exploring defensive architecture and vulnerabilities in Elastic Beanstalk.
 
 ---
