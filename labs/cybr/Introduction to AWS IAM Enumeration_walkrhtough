@@ -1,0 +1,551 @@
+Lab_url: https://cybr.com/hands-on-labs/lab/introduction-to-aws-iam-enumeration/
+To use these access keys, open up your terminal and type in:
+
+aws configure [--profile <NAME>]
+Code language: HTML, XML (xml)
+The brackets around [--profile <NAME>] (and any other command in this course or AWS documentation) means that it’s optional.
+
+When configuring profiles in the AWS CLI, you can use profile names to keep them separate. For example, you could do:
+
+aws configure --profile enumerate
+…and then input the AWS credentials:
+
+AWS Access Key ID [None]: AKIAT6...
+AWS Secret Access Key [None]: sa3CB4...
+Default region name [None]: us-east-1
+Default output format [None]:
+
+Code language: CSS (css)
+(Make sure you use us-east-1 as our labs always use this region unless otherwise specified)
+
+(For default output format, you can just press enter to leave the default value of None)
+
+Then you could do:
+
+aws configure --profile main
+…and input different credentials under that profile, and each time you issue CLI commands, you would specify which credentials you want to use by passing in the correct profile name.
+
+Of course, you can leave off the --profile option entirely if you don’t have any other credentials configured. It’s up to you.
+
+Once you have your AWS access keys set up, it’s time to enumerate!
+
+IAM Users Enumeration
+Let’s start with a very common command used by AWS professionals and attackers alike:
+
+aws sts get-caller-identity
+Code language: JavaScript (javascript)
+Remember to issue the --profile name if you used a profile, like this:
+
+aws sts get-caller-identity --profile enumerate
+Code language: JavaScript (javascript)
+Otherwise it won’t work, or worse, it will use different credentials and return wrong results!
+
+I will leave off the profile option going forward for these examples.
+
+Our result should look something like this:
+
+{
+    "UserId": "AIDAT6ZKEI3E3J2XL4E5B",
+    "Account": "921234892411",
+    "Arn": "arn:aws:iam::921234892411:user/iam-Enumeration-Joel"
+}
+
+Code language: JSON / JSON with Comments (json)
+Here we get back a:
+
+UserId
+Account
+Arn
+What we’re primarily interested in is the account ID and the ARN, which stands for Amazon Resource Name, and this represents unique identifiers in all of AWS. You’ll notice that the ARN includes the account ID, which is part of how IAM ARNs are kept unique across all of AWS.
+
+We’ve already got some pretty useful information we’d want to document, but let’s keep going.
+
+If we have permissions, we could also issue the command:
+
+aws iam get-user
+
+{
+    "User": {
+        "Path": "/",
+        "UserName": "iam-Enumeration-Joel",
+        "UserId": "AIDAT6ZKEI3E3J2XL4E5B",
+        "Arn": "arn:aws:iam::272281913033:user/iam-Enumeration-Joel",
+        "CreateDate": "2024-01-30T21:04:41+00:00"
+    }
+}
+
+Code language: JavaScript (javascript)
+To retrieve similar but slightly different information.
+
+(Note: your UserName will look a little bit different and longer than mine. I abbreviated for the examples, so that’s totally normal.)
+
+Most attackers start off by using the sts get-caller-identity command, because there is no way in AWS to prevent that call. No policy will prevent someone with valid credentials from issuing it, because it returns information that could be returned by error messages anyway. More info on that here if you are interested: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/sts/get-caller-identity.html
+
+Next, we could try using a call like this to get a snapshot of the configuration of IAM permissions (users, groups, roles, and policies) and their relationships in your account:
+
+aws iam get-account-authorization-details 
+
+An error occurred (AccessDenied) when calling the GetAccountAuthorizationDetails operation: User: arn:aws:iam::redacted:user/iam-Enumeration-Joel is not authorized to perform: iam:GetAccountAuthorizationDetails on resource: * because no identity-based policy allows the iam:GetAccountAuthorizationDetails action
+
+Code language: JavaScript (javascript)
+In this lab environment, however, we get access denied for that call.
+
+Now let’s try to enumerate more information about our current user and other users in this account.
+
+aws iam list-users
+{
+    "Users": [
+        {
+            "Path": "/",
+            "UserName": "iam-Enumeration-Chris",
+            "UserId": "AIDAT6ZKEI3EZAFRZ53LJ",
+            "Arn": "arn:aws:iam::272281913033:user/iam-Enumeration-Chris",
+            "CreateDate": "2024-01-30T21:04:59+00:00"
+        },
+        {
+            "Path": "/",
+            "UserName": "iam-Enumeration-Joel",
+            "UserId": "AIDAT6ZKEI3E3J2XL4E5B",
+            "Arn": "arn:aws:iam::272281913033:user/iam-Enumeration-Joel",
+            "CreateDate": "2024-01-30T21:04:41+00:00"
+        },
+        {
+            "Path": "/",
+            "UserName": "iam-Enumeration-Mary",
+            "UserId": "AIDAT6ZKEI3ERYU2IODF2",
+            "Arn": "arn:aws:iam::272281913033:user/iam-Enumeration-Mary",
+            "CreateDate": "2024-01-30T21:04:59+00:00"
+        },
+        {
+            "Path": "/",
+            "UserName": "iam-Enumeration-Mike",
+            "UserId": "AIDAT6ZKEI3EWLROMPHUS",
+            "Arn": "arn:aws:iam::272281913033:user/iam-Enumeration-Mike",
+            "CreateDate": "2024-01-30T21:04:41+00:00"
+        }
+    ]
+}
+
+Code language: PHP (php)
+We can see that there are 4 IAM users in this account.
+
+Let’s keep going with our next command which is used to list access keys associated with our user:
+
+aws iam list-access-keys
+{
+    "AccessKeyMetadata": [
+        {
+            "UserName": "iam-Enumeration-Joel",
+            "AccessKeyId": "AKIAT6ZKEI3E6LOKBJWL",
+            "Status": "Active",
+            "CreateDate": "2024-01-30T21:05:19+00:00"
+        }
+    ]
+}
+
+Code language: PHP (php)
+We can also pass in an optional [--user-name <value>] to see if the other users have access keys or not, but I’ll skip that step.
+
+Ok, now that we have some basic information, it’s time to dive into the weeds. Let’s start trying to enumerate permissions.
+
+We’ll start by listing out user policies, and to save on time, I’ll just enumerate the users Joel and Mary:
+
+aws iam list-user-policies --user-name iam-Enumeration-Joel
+{
+    "PolicyNames": [
+        "AllowEnumerateRoles"
+    ]
+}
+
+Code language: PHP (php)
+aws iam list-user-policies --user-name iam-Enumeration-Mary 
+{
+    "PolicyNames": []
+}
+
+Code language: PHP (php)
+We can see that the Joel user as a policy named AllowEnumerateRoles, but the user Mary has no policy names. Does that mean Mary has no permissions! Nope!
+
+This command only lists out inline policies, not managed policies. Also, keep in mind that users are often part of groups, and groups often have policies attached to them. We’ll get back to that.
+
+Before we list out managed policies, let’s retrieve Joel’s policy:
+
+aws iam get-user-policy --user-name iam-Enumeration-Joel --policy-name AllowEnumerateRoles 
+
+{
+    "UserName": "iam-Enumeration-Joel",
+    "PolicyName": "AllowEnumerateRoles",
+    "PolicyDocument": {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Action": [
+                    "iam:GetRole",
+                    "iam:GetRolePolicy",
+                    "iam:ListRoles",
+                    "iam:ListRolePolicies"
+                ],
+                "Resource": "*",
+                "Effect": "Allow"
+            }
+        ]
+    }
+}
+
+Code language: JavaScript (javascript)
+We can see exactly what this policy permits, which is 4 separate actions:
+
+iam:GetRole
+iam:GetRolePolicy
+iam:ListRoles
+iam:ListRolePolicies
+Again, that’s not the only permissions Joel has. Let’s see what I mean. Let’s list attached managed policies:
+
+aws iam list-attached-user-policies --user-name iam-Enumeration-Joel
+{
+    "AttachedPolicies": []
+}
+
+Code language: PHP (php)
+We don’t get any back, which means Joel doesn’t have any attached managed policies. It’s still worth checking just in case, though.
+
+IAM Groups Enumeration
+But again, with IAM Users in AWS, it’s typically recommended best practice to add them to an IAM Group, and to attach policies to that group. So let’s enumerate group information.
+
+aws iam list-groups
+{
+    "Groups": [
+        {
+            "Path": "/",
+            "GroupName": "iam-Enumeration-Developers",
+            "GroupId": "AGPAT6ZKEI3ESK6W56POV",
+            "Arn": "arn:aws:iam::272281913033:group/iam-Enumeration-Developers",
+            "CreateDate": "2024-01-30T21:04:42+00:00"
+        },
+        {
+            "Path": "/",
+            "GroupName": "iam-Enumeration-Infrastructure",
+            "GroupId": "AGPAT6ZKEI3ETUN33XK3E",
+            "Arn": "arn:aws:iam::272281913033:group/iam-Enumeration-Infrastructure",
+            "CreateDate": "2024-01-30T21:04:41+00:00"
+        }
+    ]
+}
+
+Code language: PHP (php)
+There are two groups in this environment:
+
+iam-Enumeration-Developers
+iam-Enumeration-Infrastructure
+How can we tell which one we’re part of? There’s a simple command we can issue:
+
+aws iam list-groups-for-user --user-name iam-Enumeration-Joel
+{
+    "Groups": [
+        {
+            "Path": "/",
+            "GroupName": "iam-Enumeration-Developers",
+            "GroupId": "AGPAT6ZKEI3ESK6W56POV",
+            "Arn": "arn:aws:iam::272281913033:group/iam-Enumeration-Developers",
+            "CreateDate": "2024-01-30T21:04:42+00:00"
+        }
+    ]
+}
+
+Code language: PHP (php)
+We are part of the Developers group, which gives us information to enumerate that group’s information:
+
+aws iam get-group --group-name iam-Enumeration-Developers
+{
+    "Users": [
+        {
+            "Path": "/",
+            "UserName": "iam-Enumeration-Joel",
+            "UserId": "AIDAT6ZKEI3E3J2XL4E5B",
+            "Arn": "arn:aws:iam::272281913033:user/iam-Enumeration-Joel",
+            "CreateDate": "2024-01-30T21:04:41+00:00"
+        },
+        {
+            "Path": "/",
+            "UserName": "iam-Enumeration-Mike",
+            "UserId": "AIDAT6ZKEI3EWLROMPHUS",
+            "Arn": "arn:aws:iam::272281913033:user/iam-Enumeration-Mike",
+            "CreateDate": "2024-01-30T21:04:41+00:00"
+        }
+    ],
+    "Group": {
+        "Path": "/",
+        "GroupName": "iam-Enumeration-Developers",
+        "GroupId": "AGPAT6ZKEI3ESK6W56POV",
+        "Arn": "arn:aws:iam::272281913033:group/iam-Enumeration-Developers",
+        "CreateDate": "2024-01-30T21:04:42+00:00"
+    }
+}
+
+Code language: JavaScript (javascript)
+We can see there are two members in this group, including our user Joel.
+
+Next, let’s list out permissions for the group:
+
+aws iam list-group-policies --group-name iam-Enumeration-Developers
+{
+    "PolicyNames": [
+        "iam-Enumeration-devs-policy"
+    ]
+}
+
+Code language: PHP (php)
+Now let’s get that policy:
+
+aws iam get-group-policy --group-name iam-Enumeration-Developers --policy-name iam-Enumeration-devs-policy
+{
+    "GroupName": "iam-Enumeration-Developers",
+    "PolicyName": "iam-Enumeration-devs-policy",
+    "PolicyDocument": {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Action": [
+                    "iam:ListAccessKeys"
+                ],
+                "Resource": [
+                    "arn:aws:iam::272281913033:user/iam-Enumeration-Joel",
+                    "arn:aws:iam::272281913033:user/iam-Enumeration-Mike"
+                ],
+                "Effect": "Allow"
+            },
+            {
+                "Action": [
+                    "iam:ListGroupPolicies",
+                    "iam:ListPolicies",
+                    "iam:ListAttachedPolicies",
+                    "iam:ListPolicyVersions",
+                    "iam:ListAttachedUserPolicies",
+                    "iam:ListUsers",
+                    "iam:ListGroups",
+                    "iam:ListGroupsForUser",
+                    "iam:GetPolicy",
+                    "iam:GetPolicyVersion",
+                    "iam:GetUser",
+                    "iam:GetUserPolicy",
+                    "iam:GetGroupPolicy",
+                    "iam:GetGroup",
+										"iam:ListAttachedGroupPolicies"
+                ],
+                "Resource": "*",
+                "Effect": "Allow"
+            }
+        ]
+    }
+}
+
+Code language: JavaScript (javascript)
+Now we’re talking! Look at all of that information! This tells us that members of this group (Joel and Mike) have all of these permissions available to them — assuming nothing else is blocking some of those permissions of course (like boundaries, as an example — but if you’re a beginner, don’t worry about that right now).
+
+Finally, let’s see if there are any attached group policies:
+
+aws iam list-attached-group-policies --group-name iam-Enumeration-Developers
+{
+    "AttachedPolicies": []
+}
+
+Code language: PHP (php)
+There are none for this group.
+
+But remember! There’s another group! We saw it earlier when we listed out groups…which is why it’s important to take good notes as you go along so you don’t have to keep re-issuing commands 🙂
+
+Using that group’s name, let’s see what we can enumerate with the same commands we used for the prior group:
+
+aws iam get-group --group-name iam-Enumeration-Infrastructure
+
+{
+    "Users": [
+        {
+            "Path": "/",
+            "UserName": "iam-Enumeration-Mary",
+            "UserId": "AIDAT6ZKEI3ERYU2IODF2",
+            "Arn": "arn:aws:iam::272281913033:user/iam-Enumeration-Mary",
+            "CreateDate": "2024-01-30T21:04:59+00:00"
+        },
+        {
+            "Path": "/",
+            "UserName": "iam-Enumeration-Chris",
+            "UserId": "AIDAT6ZKEI3EZAFRZ53LJ",
+            "Arn": "arn:aws:iam::272281913033:user/iam-Enumeration-Chris",
+            "CreateDate": "2024-01-30T21:04:59+00:00"
+        }
+    ],
+    "Group": {
+        "Path": "/",
+        "GroupName": "iam-Enumeration-Infrastructure",
+        "GroupId": "AGPAT6ZKEI3ETUN33XK3E",
+        "Arn": "arn:aws:iam::272281913033:group/iam-Enumeration-Infrastructure",
+        "CreateDate": "2024-01-30T21:04:41+00:00"
+    }
+}
+
+Code language: JavaScript (javascript)
+aws iam list-group-policies --group-name iam-Enumeration-Infrastructure
+
+{
+    "PolicyNames": [
+        "iam-Enumeration-infra-policy"
+    ]
+}
+
+Code language: PHP (php)
+aws iam get-group-policy --group-name iam-Enumeration-Infrastructure --policy-name iam-Enumeration-infra-policy
+
+Code language: JavaScript (javascript)
+{
+    "GroupName": "iam-Enumeration-Infrastructure",
+    "PolicyName": "iam-Enumeration-infra-policy",
+    "PolicyDocument": {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Action": [
+                    "iam:ListAccessKeys"
+                ],
+                "Resource": [
+                    "arn:aws:iam::272281913033:user/iam-Enumeration-Mary",
+                    "arn:aws:iam::272281913033:user/iam-Enumeration-Chris"
+                ],
+                "Effect": "Allow"
+            },
+            {
+                "Action": [
+                    "iam:ListGroupPolicies",
+                    "iam:ListPolicies",
+                    "iam:ListPolicyVersions",
+                    "iam:ListUserPolicies",
+                    "iam:ListUsers",
+                    "iam:ListGroups",
+                    "iam:ListGroupsForUser",
+                    "iam:GetPolicy",
+                    "iam:GetPolicyVersion",
+                    "iam:GetUser",
+                    "iam:GetUserPolicy",
+                    "iam:GetGroupPolicy"
+                ],
+                "Resource": "*",
+                "Effect": "Allow"
+            }
+        ]
+    }
+}
+
+Code language: JSON / JSON with Comments (json)
+aws iam list-attached-group-policies --group-name iam-Enumeration-Infrastructure
+
+{
+    "AttachedPolicies": [
+        {
+            "PolicyName": "AWSCloudFormationReadOnlyAccess",
+            "PolicyArn": "arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess"
+        },
+        {
+            "PolicyName": "AmazonS3ReadOnlyAccess",
+            "PolicyArn": "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+        }
+    ]
+}
+
+Code language: PHP (php)
+Ah! This time we have attached managed policies!
+
+arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
+arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+These are AWS-managed policies and so you can see exactly what they allow in the documentation (liked to above).
+
+That’s not all that we can do with users and groups, but let’s stop here for this lesson and lab. Instead, let’s move on to enumerating IAM Roles.
+
+IAM Roles Enumeration
+Roles are a crucial part of AWS, and if you’re not familiar with them we have course that deep dives into what they are and how to use them. In the meantime, read up on what they are here.
+
+But let’s see how we can enumerate information about roles in this lab environment.
+
+aws iam list-roles
+Code language: PHP (php)
+Most AWS environments will have many roles in them. Roles are used for all kinds of things, and one single user may require multiple roles in the account to do their jobs, so it’s not unusual to see dozens or even hundreds of roles. In fact, by default, an AWS account can have up to 1,000 roles in it, and you can ask for a quota increase to up to 5,000 — just to give you a sense.
+
+So this command is helpful but it can also be overwhelming. In fact, if your terminal is stuck with a : it’s because it’s letting you scroll. You can scroll with your keyboard up/down keys, or you can exit by pressing q on your keyboard.
+
+Let’s narrow it down. If you already know the name of the role, you can filter like this:
+
+aws iam list-roles --query "Roles[?RoleName=='SupportRole']"
+Code language: CSS (css)
+(It’s case sensitive so check your spelling or copy/paste)
+
+[
+    {
+        "Path": "/",
+        "RoleName": "SupportRole",
+        "RoleId": "AROAT6ZKEI3EX4LQ635JX",
+        "Arn": "arn:aws:iam::272281913033:role/SupportRole",
+        "CreateDate": "2024-01-30T21:05:00+00:00",
+        "AssumeRolePolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "AWS": "arn:aws:iam::272281913033:root"
+                    },
+                    "Action": "sts:AssumeRole",
+                    "Condition": {
+                        "ArnEquals": {
+                            "aws:PrincipalArn": "arn:aws:iam::272281913033:user/iam-Enumeration-Mary"
+                        }
+                    }
+                }
+            ]
+        },
+        "Description": "Assumable role for internal support",
+        "MaxSessionDuration": 3600
+    }
+]
+
+Code language: JSON / JSON with Comments (json)
+We get a lot of information back with this command, including:
+
+Arn
+AssumeRolePolicyDocument
+Description
+MaxSessionDuration
+As we can see, this role is meant to be used for internal support, and it’s assumable by the user Mary, not our user Joel.
+
+Knowing that, if we were an attacker or a pentester trying to access this role, we might want to try and find a way to escalate privileges to the Mary user, for example…
+
+But that’s just the AssumeRolePolicyDocument which tells us who can assume it. That’s not the role’s permissions. We can list that out with:
+
+aws iam list-role-policies --role-name SupportRole
+{
+    "PolicyNames": [
+        "AllowS3FullAccessForRole"
+    ]
+}
+
+Code language: PHP (php)
+aws iam get-role-policy --role-name SupportRole --policy-name AllowS3FullAccessForRole
+
+{
+    "RoleName": "Supportrole",
+    "PolicyName": "AllowS3FullAccessForRole",
+    "PolicyDocument": {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Action": [
+                    "s3:*"
+                ],
+                "Resource": "*",
+                "Effect": "Allow",
+                "Sid": "AllowS3FullAccess"
+            }
+        ]
+    }
+}
+
+Code language: JavaScript (javascript)
+We can see that this role has full Amazon S3 access, which would be a target of very high interest to a threat actor, and something as permissive as s3:* should be a red flag to anyone reviewing this environment’s security. Permissions that broad should rarely be used.
