@@ -12,7 +12,7 @@ Welcome! This repository hosts the lab notes, command cheat sheets, and technica
 ## 📂 Video Resources
 
 ### 🔹 AWS IAM Enumeration (Manual vs PACU)
-* **Video:** [Link will go here once uploaded]
+* **Video:** https://youtu.be/O7AfurK85rQ
 * **Lab Provider:** Cyber
 * **Tools Used:** AWS CLI, PACU
 * **Resources:**
