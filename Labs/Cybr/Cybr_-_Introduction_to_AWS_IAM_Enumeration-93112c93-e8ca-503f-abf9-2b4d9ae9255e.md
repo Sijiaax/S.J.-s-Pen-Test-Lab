@@ -1,3 +1,4 @@
+Cybr - Introduction to AWS IAM Enumeration
 [https://cybr.com/hands-on-labs/lab/introduction-to-aws-iam-enumeration/](https://cybr.com/hands-on-labs/lab/introduction-to-aws-iam-enumeration/)
 # Manual Way
 ## Initial keys
