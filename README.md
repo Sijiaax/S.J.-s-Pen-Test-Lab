@@ -12,6 +12,7 @@ Welcome! This repository hosts the lab notes, command cheat sheets, and technica
 ## 📂 Video Resources
 
 # ☁️ AWS S3 Enumeration & Lateral Movement Lab
+https://github.com/Sijiaax/S.J.-s-Pen-Test-Lab/blob/main/Labs/Pwened%20Lab/PWNED_Labs_-_AWS_S3_Enumeration_Basics-079ad5ba-5b97-5b99-b60c-cf16de8fd9ea.md
 
 ## 🚨 Scenario
 Targeting a development bucket (`dev.huge-logistics.com`), this lab demonstrates how a simple misconfiguration (Anonymous Read Access) can lead to a full account compromise involving PII data theft.
@@ -35,14 +36,14 @@ To prevent this, the organization should:
 3.  **Least Privilege:** Ensure `migration-files` are not readable by standard users like `pam-test`.
 
 
-### 🔹 AWS IAM Enumeration (Manual vs PACU)
+# 🔹 AWS IAM Enumeration (Manual vs PACU)
 * **Video:** https://youtu.be/O7AfurK85rQ
 * **Lab Provider:** Cyber
 * **Tools Used:** AWS CLI, PACU
 * **Resources:**
     *(https://github.com/Sijiaax/S.J.-s-Pen-Test-Lab/blob/main/Labs/Cybr/Cybr_-_Introduction_to_AWS_IAM_Enumeration-93112c93-e8ca-503f-abf9-2b4d9ae9255e.md) - All the CLI commands used in the video.
 
-### 🔹 AWS Elastic Beanstalk
+# 🔹 AWS Elastic Beanstalk
 * **Video:** https://youtu.be/AXMTKARiz40; https://youtu.be/gj7vZ4HXHg8; https://youtu.be/T-wismbixI4
 * **Summary:** Exploring defensive architecture and vulnerabilities in Elastic Beanstalk.
 
