@@ -13,6 +13,7 @@ Welcome! This repository hosts the lab notes, command cheat sheets, and technica
 
 # ☁️ AWS S3 Enumeration & Lateral Movement Lab
 https://github.com/Sijiaax/S.J.-s-Pen-Test-Lab/blob/main/Labs/Pwened%20Lab/PWNED_Labs_-_AWS_S3_Enumeration_Basics-079ad5ba-5b97-5b99-b60c-cf16de8fd9ea.md
+Youtube Video: https://youtu.be/IQOrMMNRkxg
 
 ## 🚨 Scenario
 Targeting a development bucket (`dev.huge-logistics.com`), this lab demonstrates how a simple misconfiguration (Anonymous Read Access) can lead to a full account compromise involving PII data theft.
